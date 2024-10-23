@@ -163,6 +163,8 @@ Namespace Controllers.Ngos
                     DtNgoOffert.Columns.Add("Currency", GetType(String))
                     DtNgoOffert.Columns.Add("Scales", GetType(String))
                     DtNgoOffert.Columns.Add("CabinType", GetType(String))
+                    DtNgoOffert.Columns.Add("DepartureDate", GetType(String))
+                    DtNgoOffert.Columns.Add("ReturnDate", GetType(String))
 
                     For Each offer As OfferModel In NgoModel.NgoOffert
                         Dim row2 As DataRow = DtNgoOffert.NewRow()
@@ -177,6 +179,8 @@ Namespace Controllers.Ngos
                         row2("Currency") = offer.Currency
                         row2("Scales") = offer.Scales
                         row2("CabinType") = offer.CabinType
+                        row2("DepartureDate") = offer.DepartureDate
+                        row2("ReturnDate") = offer.ReturnDate
 
                         ' Agregar la fila al DataTable
                         DtNgoOffert.Rows.Add(row2)

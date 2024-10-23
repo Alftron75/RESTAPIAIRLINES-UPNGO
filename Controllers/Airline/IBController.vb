@@ -306,6 +306,8 @@ Namespace Controllers.Airline
             Dim CurrencyS As String = String.Empty
             Dim cabinTypeNodeS As String = String.Empty
             Dim segmentCount As Integer = 0
+            Dim DepartureDate As String = String.Empty
+            Dim ReturnDate As String = String.Empty
 
             ' Crear un XmlNamespaceManager para manejar los espacios de nombres
             Dim nsmgr As New XmlNamespaceManager(doc.NameTable)
@@ -321,6 +323,7 @@ Namespace Controllers.Airline
 
             ' Seleccionar todos los nodos Offer
             Dim offerNodes As XmlNodeList = doc.SelectNodes("//ns:OffersGroup/ns:AirlineOffers/ns:Offer", nsmgr)
+            Dim flightsegmnet As XmlNodeList = doc.SelectNodes("//ns:DataLists/ns:FlightSegmentList/ns:FlightSegment", nsmgr)
 
             ' Recorrer cada Offer
             For Each offerNode As XmlNode In offerNodes
@@ -362,9 +365,39 @@ Namespace Controllers.Airline
 
                         ' Contar los elementos dentro de SegmentRefs
                         Dim segmentRefsNodes As XmlNodeList = offerItemNode.SelectNodes("ns:FareDetail/ns:FareComponent/ns:SegmentRefs", nsmgr)
+                        Dim contador As Integer = 1
+
                         For Each segmentRefNode As XmlNode In segmentRefsNodes
                             Dim segments As String = segmentRefNode.InnerText
                             segmentCount += segments.Split(" "c).Length
+
+                            Dim elementos As String() = segments.Split(" "c) ' Separa el string por espacios
+                            Dim valor As String = elementos.ElementAt(0)
+
+                            Dim dateTimeValue As String = String.Empty
+
+                            ' Iterar sobre cada FlightSegment
+                            For Each segment As XmlNode In flightsegmnet
+                                ' Verificar si el SegmentKey coincide con el valor IB031220241112MEXMAD
+                                If segment.Attributes("SegmentKey").Value = valor Then
+                                    ' Buscar los nodos de Departure -> Date y Time
+                                    Dim departureNode As XmlNode = segment.SelectSingleNode("ns:Departure", GetNamespaceManager(doc))
+
+                                    ' Obtener el valor de la fecha y la hora
+                                    Dim flightDate As String = departureNode.SelectSingleNode("ns:Date", GetNamespaceManager(doc)).InnerText
+                                    Dim flightTime As String = departureNode.SelectSingleNode("ns:Time", GetNamespaceManager(doc)).InnerText
+
+                                    ' Combinar fecha y hora en una sola variable
+                                    dateTimeValue = flightDate & " " & flightTime
+                                    If contador = 1 Then
+                                        DepartureDate = dateTimeValue
+                                    Else
+                                        ReturnDate = dateTimeValue
+                                    End If
+                                    Exit For ' Salir del bucle una vez encontrado el segmento
+                                End If
+                            Next
+                            contador += 1
                         Next
                     Next
                 End If
@@ -380,6 +413,8 @@ Namespace Controllers.Airline
                 OutPutModel.Currency = CurrencyS
                 OutPutModel.Scales = CStr(segmentCount)
                 OutPutModel.CabinType = cabinTypeNodeS
+                OutPutModel.DepartureDate = DepartureDate
+                OutPutModel.ReturnDate = ReturnDate
 
                 ListModel.Add(OutPutModel)
 
@@ -390,5 +425,10 @@ Namespace Controllers.Airline
 
         End Function
 
+        Private Function GetNamespaceManager(xmlDoc As XmlDocument) As XmlNamespaceManager
+            Dim nsManager As New XmlNamespaceManager(xmlDoc.NameTable)
+            nsManager.AddNamespace("ns", "http://www.iata.org/IATA/EDIST/2017.2")
+            Return nsManager
+        End Function
     End Class
 End Namespace
